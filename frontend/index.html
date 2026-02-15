@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firewall Simulator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <header>
+            <div class="logo">
+                <span class="icon">🛡️</span>
+                <h1>Firewall<span class="accent">Sim</span></h1>
+            </div>
+            <div class="status-indicator">
+                <span class="dot"></span> System Active
+            </div>
+        </header>
+
+        <main>
+            <!-- Traffic Simulation Section -->
+            <section class="panel simulation-panel">
+                <h2><span class="icon">⚡</span> Traffic Simulator</h2>
+                <div class="form-group">
+                    <label>Protocol</label>
+                    <div class="radio-group" id="protocol-select">
+                        <label class="radio-label"><input type="radio" name="protocol" value="TCP" checked> TCP</label>
+                        <label class="radio-label"><input type="radio" name="protocol" value="UDP"> UDP</label>
+                        <label class="radio-label"><input type="radio" name="protocol" value="ICMP"> ICMP</label>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Source IP</label>
+                        <input type="text" id="source-ip" placeholder="192.168.1.5" value="192.168.1.5">
+                    </div>
+                    <div class="form-group">
+                        <label>Destination IP</label>
+                        <input type="text" id="dest-ip" placeholder="10.0.0.1" value="10.0.0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>Port</label>
+                        <input type="number" id="port" placeholder="80" value="80">
+                    </div>
+                </div>
+                <button id="simulate-btn" class="btn primary">Send Packet</button>
+
+                <div id="simulation-result" class="result-box hidden">
+                    <!-- Result will appear here -->
+                </div>
+            </section>
+
+            <div class="grid-layout">
+                <!-- Rules Management -->
+                <section class="panel rules-panel">
+                    <div class="panel-header">
+                        <h2><span class="icon">📋</span> Firewall Rules</h2>
+                        <button id="add-rule-modal-btn" class="btn secondary small">+ Add Rule</button>
+                    </div>
+                    <div class="table-container">
+                        <table id="rules-table">
+                            <thead>
+                                <tr>
+                                    <th>Action</th>
+                                    <th>Protocol</th>
+                                    <th>Source</th>
+                                    <th>Dest</th>
+                                    <th>Port</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Rules populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Logs -->
+                <section class="panel logs-panel">
+                    <div class="panel-header">
+                        <h2><span class="icon">📜</span> Traffic Logs</h2>
+                        <button id="refresh-logs" class="btn icon-btn">↻</button>
+                    </div>
+                    <div class="logs-container" id="logs-container">
+                        <!-- Logs populated by JS -->
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Rule Modal -->
+    <div id="rule-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3>Add New Rule</h3>
+            <div class="form-group">
+                <label>Action</label>
+                <select id="rule-action">
+                    <option value="ALLOW">ALLOW</option>
+                    <option value="BLOCK">BLOCK</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Protocol</label>
+                <select id="rule-protocol">
+                    <option value="TCP">TCP</option>
+                    <option value="UDP">UDP</option>
+                    <option value="ICMP">ICMP</option>
+                    <option value="ANY">ANY</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Source IP (CIDR supported)</label>
+                <input type="text" id="rule-source" placeholder="e.g. 192.168.1.0/24 or ANY" value="ANY">
+            </div>
+            <div class="form-group">
+                <label>Destination IP</label>
+                <input type="text" id="rule-dest" placeholder="e.g. 10.0.0.1 or ANY" value="ANY">
+            </div>
+            <div class="form-group">
+                <label>Port (0 for Any)</label>
+                <input type="number" id="rule-port" value="0">
+            </div>
+            <div class="modal-actions">
+                <button id="cancel-rule-btn" class="btn secondary">Cancel</button>
+                <button id="save-rule-btn" class="btn primary">Add Rule</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+
+</html>
