@@ -2,8 +2,6 @@
 
 A modern, interactive web-based Firewall Simulator that allows users to define network security rules, simulate traffic packets, and visualize how a firewall processes network requests in real-time.
 
-![Firewall Simulator](https://placehold.co/800x400?text=Firewall+Simulator+Dashboard)
-
 ## 🚀 Features
 
 -   **Rule Management**: Create, view, and delete firewall rules based on Protocol, Source IP, Destination IP, and Port.
