@@ -2,30 +2,18 @@ const API_URL = "http://127.0.0.1:8000";
 
 // DOM Elements
 const rulesTableBody = document.querySelector('#rules-table tbody');
-const logsContainer = document.querySelector('#logs-container');
+const logsContainer = document.getElementById('logs-container');
 const simulateBtn = document.getElementById('simulate-btn');
 const simulationResult = document.getElementById('simulation-result');
-const refreshLogsBtn = document.getElementById('refresh-logs');
-
-// Modal Elements
+const refreshLogsBtn = document.getElementById('refresh-logs-btn');
+const addRuleBtn = document.getElementById('add-rule-btn');
 const ruleModal = document.getElementById('rule-modal');
-const addRuleBtn = document.getElementById('add-rule-modal-btn');
-const closeModalBtn = document.querySelector('.close-modal');
-const saveRuleBtn = document.getElementById('save-rule-btn');
+const closeModalBtn = document.getElementById('close-modal-btn');
 const cancelRuleBtn = document.getElementById('cancel-rule-btn');
+const saveRuleBtn = document.getElementById('save-rule-btn');
+
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
-    // Select elements inside DOMContentLoaded to ensure they exist
-    const ruleModal = document.getElementById('rule-modal');
-    const addRuleBtn = document.getElementById('add-rule-modal-btn');
-    const closeModalBtn = document.querySelector('.close-modal');
-    const saveRuleBtn = document.getElementById('save-rule-btn');
-    const cancelRuleBtn = document.getElementById('cancel-rule-btn');
-
-    // Other elements
-    const simulateBtn = document.getElementById('simulate-btn');
-    const refreshLogsBtn = document.getElementById('refresh-logs');
-
     // Load initial data
     fetchRules();
     fetchLogs();
@@ -34,57 +22,69 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(fetchLogs, 5000);
 
     // --- Event Listeners ---
+    if (addRuleBtn) addRuleBtn.addEventListener('click', openRuleModal);
+    if (closeModalBtn) closeModalBtn.addEventListener('click', closeRuleModal);
+    if (cancelRuleBtn) cancelRuleBtn.addEventListener('click', closeRuleModal);
 
-    // Open Modal
-    if (addRuleBtn) {
-        addRuleBtn.addEventListener('click', () => {
-            ruleModal.classList.remove('hidden');
-        });
-    }
-
-    // Close Modal (X button)
-    if (closeModalBtn) {
-        closeModalBtn.addEventListener('click', () => {
-            console.log("Close modal clicked");
-            ruleModal.classList.add('hidden');
-        });
-    }
-
-    // Close Modal (Cancel button)
-    if (cancelRuleBtn) {
-        cancelRuleBtn.addEventListener('click', () => {
-            ruleModal.classList.add('hidden');
-        });
-    }
-
-    // Close Modal (Click outside)
+    // Close modal on background click
     window.addEventListener('click', (e) => {
-        if (e.target === ruleModal) {
-            ruleModal.classList.add('hidden');
+        if (ruleModal && e.target === ruleModal) {
+            closeRuleModal();
         }
     });
 
-    // Save Rule
     if (saveRuleBtn) {
-        saveRuleBtn.addEventListener('click', addRule);
+        saveRuleBtn.addEventListener('click', (e) => addRule(e));
     }
 
-    // Simulation
-    if (simulateBtn) {
-        simulateBtn.addEventListener('click', simulatePacket);
-    }
+    if (simulateBtn) simulateBtn.addEventListener('click', simulatePacket);
+    if (refreshLogsBtn) refreshLogsBtn.addEventListener('click', fetchLogs);
 
-    // Refresh Logs
-    if (refreshLogsBtn) {
-        refreshLogsBtn.addEventListener('click', fetchLogs);
-    }
+    // Enter key support for forms
+    document.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            // If in modal, save rule
+            if (!ruleModal.classList.contains('hidden')) {
+                // Prevent default if it's a form submit
+                // But addRule handles event.preventDefault()
+                // Just let the button click handler do it if button is inside form.
+                // Or explicitly call addRule(e)
+            }
+        }
+    });
 });
+
+// --- Modal Functions ---
+let modalTimeout;
+
+const openRuleModal = () => {
+    if (ruleModal) {
+        clearTimeout(modalTimeout);
+        ruleModal.classList.remove('hidden');
+        // Small delay to allow display:block to apply before adding opacity class for transition
+        requestAnimationFrame(() => {
+            ruleModal.classList.add('open');
+        });
+    }
+};
+
+const closeRuleModal = () => {
+    if (ruleModal) {
+        ruleModal.classList.remove('open');
+        // Wait for transition to finish before hiding
+        clearTimeout(modalTimeout);
+        modalTimeout = setTimeout(() => {
+            ruleModal.classList.add('hidden');
+        }, 300);
+    }
+};
 
 // --- API Functions ---
 
 async function fetchRules() {
     try {
         const response = await fetch(`${API_URL}/rules`);
+        if (!response.ok) throw new Error("Failed to fetch rules");
         const rules = await response.json();
         renderRules(rules);
     } catch (error) {
@@ -95,8 +95,13 @@ async function fetchRules() {
 async function addRule(event) {
     if (event) event.preventDefault();
 
-    const action = document.getElementById('rule-action').value;
-    const protocol = document.getElementById('rule-protocol').value;
+    // Get values
+    const actionElement = document.querySelector('input[name="rule-action"]:checked');
+    const action = actionElement ? actionElement.value : 'ALLOW';
+
+    const protocolElement = document.getElementById('rule-protocol');
+    const protocol = protocolElement ? protocolElement.value : 'TCP';
+
     const sourceIpVal = document.getElementById('rule-source').value.trim();
     const destIpVal = document.getElementById('rule-dest').value.trim();
     const portVal = document.getElementById('rule-port').value.trim();
@@ -112,15 +117,12 @@ async function addRule(event) {
     }
 
     const rule = {
-        // id: generated by server
         action,
         protocol,
         source_ip: sourceIp,
         destination_ip: destIp,
         port
     };
-
-    console.log("Adding rule:", rule);
 
     try {
         const response = await fetch(`${API_URL}/rules`, {
@@ -130,7 +132,7 @@ async function addRule(event) {
         });
 
         if (response.ok) {
-            ruleModal.classList.add('hidden');
+            closeRuleModal();
             fetchRules();
             // Reset form
             document.getElementById('rule-source').value = 'ANY';
@@ -138,16 +140,15 @@ async function addRule(event) {
             document.getElementById('rule-port').value = '0';
         } else {
             const errText = await response.text();
-            console.error("Failed to add rule:", errText);
             alert('Failed to add rule: ' + errText);
         }
     } catch (error) {
         console.error("Error adding rule:", error);
-        alert("Error connecting to server. Is it running?");
+        alert("Error connecting to server.");
     }
 }
 
-// Expose deleteRule to window for onclick attribute
+// Global for inline onclick
 window.deleteRule = async function (id) {
     if (!confirm('Are you sure you want to delete this rule?')) return;
 
@@ -165,7 +166,6 @@ async function simulatePacket() {
     const destIp = document.getElementById('dest-ip').value;
     const port = parseInt(document.getElementById('port').value);
 
-    // Basic Validation
     if (!sourceIp || !destIp) {
         alert("Please enter both Source and Destination IPs");
         return;
@@ -204,6 +204,7 @@ async function simulatePacket() {
 async function fetchLogs() {
     try {
         const response = await fetch(`${API_URL}/logs`);
+        if (!response.ok) throw new Error("Failed to fetch logs");
         const logs = await response.json();
         renderLogs(logs);
     } catch (error) {
@@ -215,16 +216,22 @@ async function fetchLogs() {
 
 function renderRules(rules) {
     rulesTableBody.innerHTML = '';
+
+    if (rules.length === 0) {
+        rulesTableBody.innerHTML = '<tr><td colspan="6" style="text-align:center; color: var(--text-muted); padding: 2rem;">No rules active. Traffic will be blocked by default logic if configured.</td></tr>';
+        return;
+    }
+
     rules.forEach(rule => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td><span class="action-badge action-${rule.action}">${rule.action}</span></td>
+            <td><span class="badge badge-${rule.action}">${rule.action}</span></td>
             <td>${rule.protocol}</td>
-            <td>${rule.source_ip}</td>
-            <td>${rule.destination_ip}</td>
+            <td style="font-family: var(--font-mono)">${rule.source_ip}</td>
+            <td style="font-family: var(--font-mono)">${rule.destination_ip}</td>
             <td>${rule.port === 0 ? 'Any' : rule.port}</td>
-            <td>
-                <button class="btn danger small" onclick="deleteRule('${rule.id}')">Delete</button>
+            <td style="text-align: right">
+                <button class="btn btn-danger" onclick="deleteRule('${rule.id}')">Delete</button>
             </td>
         `;
         rulesTableBody.appendChild(tr);
@@ -233,20 +240,30 @@ function renderRules(rules) {
 
 function renderLogs(logs) {
     logsContainer.innerHTML = '';
-    logs.forEach(log => {
+
+    // Sort logs descending (newest first)
+    // Assuming backend returns them in order, but let's reverse if needed
+    // Usually logs append, so latest is last. Let's show latest on top.
+    const reversedLogs = [...logs].reverse();
+
+    reversedLogs.forEach(log => {
         const div = document.createElement('div');
-        div.className = 'log-entry';
+        div.className = `log-entry ${log.action === 'ALLOWED' ? 'allowed' : 'blocked'}`;
 
         const time = new Date(log.timestamp * 1000).toLocaleTimeString();
-        const actionClass = log.action === 'ALLOWED' ? 'action-ALLOWED' : 'action-BLOCKED';
+        const icon = log.action === 'ALLOWED' ? '✅' : '🚫';
 
         div.innerHTML = `
-            <span class="log-time">[${time}]</span>
-            <span class="log-info">
-                ${log.packet.protocol} 
-                ${log.packet.source_ip} &rarr; ${log.packet.destination_ip}:${log.packet.port}
-            </span>
-            <span class="log-action ${actionClass}">${log.action}</span>
+            <span class="log-time">${time}</span>
+            <div class="log-details">
+                <strong style="width: 50px">${log.packet.protocol}</strong>
+                <span>${log.packet.source_ip}</span>
+                <span class="arrow">&rarr;</span>
+                <span>${log.packet.destination_ip}:${log.packet.port}</span>
+            </div>
+            <div style="text-align: right; font-weight: bold; color: var(--${log.action === 'ALLOWED' ? 'success' : 'danger'})">
+                ${log.action}
+            </div>
         `;
         logsContainer.appendChild(div);
     });
@@ -254,11 +271,21 @@ function renderLogs(logs) {
 
 function displaySimulationResult(log) {
     simulationResult.classList.remove('hidden');
-    simulationResult.className = `result-box result-${log.action}`;
+    // Reset classes
+    simulationResult.className = 'result-box';
+    simulationResult.offsetWidth; // Trigger reflow for animation restart if needed
 
     if (log.action === "BLOCKED") {
-        simulationResult.innerHTML = `🚫 PACKET BLOCKED (Rule: ${log.matched_rule_id ? log.matched_rule_id.substring(0, 8) + '...' : 'Default'})`;
+        simulationResult.classList.add('result-BLOCKED');
+        simulationResult.innerHTML = `
+            <div style="font-size: 1.2rem; margin-bottom: 0.5rem">🚫 PACKET BLOCKED</div>
+            <div style="font-size: 0.9rem; opacity: 0.8">Rule: ${log.matched_rule_id ? log.matched_rule_id : 'Default Policy'}</div>
+        `;
     } else {
-        simulationResult.innerHTML = `✅ PACKET ALLOWED`;
+        simulationResult.classList.add('result-ALLOWED');
+        simulationResult.innerHTML = `
+            <div style="font-size: 1.2rem; margin-bottom: 0.5rem">✅ PACKET ALLOWED</div>
+            <div style="font-size: 0.9rem; opacity: 0.8">Traffic permitted</div>
+        `;
     }
 }

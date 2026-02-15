@@ -1,133 +1,120 @@
-# Firewall Simulator Walkthrough
+# Firewall Simulator
 
-Welcome to the Firewall Simulator! This project allows you to simulate network traffic and define firewall rules to allow or block packets. It features a FastAPI backend and a responsive HTML/CSS/JS frontend.
+A modern, interactive web-based Firewall Simulator that allows users to define network security rules, simulate traffic packets, and visualize how a firewall processes network requests in real-time.
 
-## Project Structure
+![Firewall Simulator](https://placehold.co/800x400?text=Firewall+Simulator+Dashboard)
 
-- **backend/**: Contains the Python FastAPI application.
-  - `main.py`: Entry point for the backend API.
-  - `firewall.py`: Core logic for packet filtering.
-  - `models.py`: Data models for Rules, Packets, and Logs.
-  - `requirements.txt`: Python dependencies.
-- **frontend/**: Contains the user interface.
-  - `index.html`: Main application page.
-  - `style.css`: Stylesheet for the application.
-  - `js/app.js`: Frontend logic for interacting with the API.
-- **test_api.py**: A script to test the backend API endpoints programmatically.
+## 🚀 Features
 
-## Prerequisites
-
-- **Python 3.8+**: Required to run the backend.
-- **Modern Web Browser**: Chrome, Firefox, Edge, etc.
-
-## Running the Project
-
-You will need to run the **Backend** and **Frontend** simultaneously. It is best to use two separate terminal windows.
-
-### Quick Start Summary
-1.  **Terminal 1 (Backend)**:
-    ```bash
-    cd backend
-    pip install -r requirements.txt
-    uvicorn main:app --reload --port 8000
-    ```
-2.  **Terminal 2 (Frontend)**:
-    ```bash
-    cd frontend
-    python -m http.server 3000
-    ```
-3.  **Browser**: Open `http://localhost:3000`
+-   **Rule Management**: Create, view, and delete firewall rules based on Protocol, Source IP, Destination IP, and Port.
+-   **Traffic Simulation**: Manually craft network packets (TCP/UDP/ICMP) to test against your active rules.
+-   **Real-time Decision Engine**: Visual feedback on whether packets are **ALLOWED** or **BLOCKED**.
+-   **Live Logging**: Automatically updates traffic logs to show a history of all simulation attempts.
+-   **Modern UI**: A responsive, dark-themed dashboard built with Glassmorphism design principles.
 
 ---
 
-### Detailed Steps
+## ⚙️ How It Works
 
-#### 1. Start the Backend Server
-The backend powers the API and logic.
+The project is built on a **Client-Server Architecture**:
 
-1.  Open your first terminal.
-2.  Navigate to the `backend` folder:
-    ```bash
-    cd backend
-    ```
-3.  Create and activate a virtual environment (Recommended):
-    - **Windows**:
-      ```bash
-      python -m venv venv
-      venv\Scripts\activate
-      ```
-    - **macOS/Linux**:
-      ```bash
-      python3 -m venv venv
-      source venv/bin/activate
-      ```
-4.  Install dependencies:
-    ```bash
-    pip install -r requirements.txt
-    ```
-5.  Run the server:
-    ```bash
-    uvicorn main:app --reload --port 8000
-    ```
-    *Success:* You should see `Uvicorn running on http://127.0.0.1:8000`.
+1.  **The Engine (Backend)**
+    *   Written in **Python** using **FastAPI**.
+    *   The core logic lies in `FirewallEngine` (in `firewall.py`).
+    *   **First-Match Strategy**: When a packet is simulated, the engine iterates through the list of active rules from top to bottom.
+    *   The **first rule** that matches the packet's criteria (Protocol, IP, Port) determines the action (`ALLOW` or `BLOCK`).
+    *   If no rule matches, the default behavior is **ALLOW**.
 
-#### 2. Start the Frontend
-The frontend is the web interface.
+2.  **The Interface (Frontend)**
+    *   Built with **HTML5**, **CSS3**, and **Vanilla JavaScript**.
+    *   Communicates with the backend via REST API endpoints.
+    *   **Polling**: The frontend automatically fetches the latest logs every 5 seconds to keep the dashboard in sync.
 
-1.  Open a **new** terminal window.
-2.  Navigate to the `frontend` folder:
-    ```bash
-    cd frontend
-    ```
-3.  Start a simple local web server on port 3000 (to avoid conflict with backend on 8000):
-    ```bash
-    python -m http.server 3000
-    ```
-    *Note: You can also just double-click `index.html` to open it, but some features might be limited by browser security policies.*
+3.  **Data Flow**
+    *   **Adding a Rule**: User input -> Frontend `POST /rules` -> Rule added to Backend Memory.
+    *   **Simulating Traffic**: User input -> Frontend `POST /simulate` -> Backend processes packet -> Returns `LogEntry` (Allowed/Blocked) -> Frontend displays result.
 
-#### 3. Access the App
-Open your web browser and go to:
-[http://localhost:3000](http://localhost:3000)
+---
 
-If you didn't run the python server for the frontend, simply drag and drop `index.html` into your browser.
-
-## Using the Application
-
-### Adding Rules
-1.  Click the **+ Add Rule** button in the **Firewall Rules** panel.
-2.  Fill in the rule details:
-    - **Action**: `ALLOW` or `BLOCK`.
-    - **Protocol**: TCP, UDP, ICMP, or ANY.
-    - **Source IP**: Specific IP (e.g., `192.168.1.5`), CIDR (e.g., `192.168.1.0/24`), or `ANY`.
-    - **Destination IP**: Specific IP or `ANY`.
-    - **Port**: Specific port number (e.g., `80`) or `0` for Any.
-3.  Click **Add Rule**. The rule will appear in the list.
-
-### Simulating Traffic
-1.  In the **Traffic Simulator** panel, configure a packet:
-    - Select a **Protocol**.
-    - Enter a **Source IP** and **Destination IP**.
-    - Enter a **Port**.
-2.  Click **Send Packet**.
-3.  The result (Allowed/Blocked) will be displayed below the button.
-
-### Viewing Logs
-- The **Traffic Logs** panel updates automatically every 5 seconds.
-- It shows the history of allowed and blocked packets.
-- You can manually refresh logs by clicking the **↻** button.
-
-## Troubleshooting
-
-- **Backend not connecting**: Ensure the backend server is running on port 8000. Check the terminal for errors.
-- **CORS Issues**: If you encounter CORS errors in the browser console, try running the frontend using a local HTTP server (python `http.server`) instead of opening the file directly.
-- **Rule not working**: Remember that valid rules are processed in order (top to bottom). The first matching rule determines the action.
-
-## Testing
-
-You can run the provided test script to verify the backend API is working correctly:
+## 🛠️ Project Structure
 
 ```bash
-python test_api.py
+Firewall Simulator/
+├── backend/                # FastAPI logic
+│   ├── main.py             # API Entry point
+│   ├── firewall.py         # Packet filtering logic
+│   ├── models.py           # Pydantic data models
+│   └── requirements.txt    # Python dependencies
+├── frontend/               # User Interface
+│   ├── index.html          # Dashboard layout
+│   ├── style.css           # Modern dark theme styles
+│   └── js/
+│       └── app.js          # API integration & UI logic
+└── test_api.py             # Automated API tests
 ```
 
-This will run a series of automated tests against the running backend.
+---
+
+## 🏁 Getting Started
+
+You need to run the **Backend** and **Frontend** simultaneously in separate terminals.
+
+### Prerequisites
+-   **Python 3.8+**
+-   **Modern Web Browser**
+
+### 1. Start the Backend Server
+This powers the API and firewall logic.
+
+```bash
+cd backend
+
+# Create virtual environment (Optional but Recommended)
+python -m venv venv
+# Windows: venv\Scripts\activate
+# Mac/Linux: source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the server
+uvicorn main:app --reload --port 8000
+```
+> The API will be available at `http://127.0.0.1:8000`.
+
+### 2. Start the Frontend
+This serves the web interface.
+
+```bash
+cd frontend
+
+# Run a simple Python HTTP server
+python -m http.server 3000
+```
+
+### 3. Access the Application
+Open your browser and navigate to:
+👉 **[http://localhost:3000](http://localhost:3000)**
+
+---
+
+## 📡 API Reference
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | **/rules** | Get all active firewall rules |
+| `POST` | **/rules** | Add a new firewall rule |
+| `DELETE` | **/rules/{id}** | Delete a specific rule |
+| `POST` | **/simulate** | Send a packet to test against rules |
+| `GET` | **/logs** | Get history of simulated traffic |
+
+---
+
+## 🧪 Testing
+
+To run the automated backend tests:
+
+```bash
+# From the root directory
+python test_api.py
+```
