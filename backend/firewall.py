@@ -25,7 +25,9 @@ class FirewallEngine:
                 address = ipaddress.ip_address(packet_ip)
                 return address in network
             else:
-                return rule_ip == packet_ip
+                rule_addr = ipaddress.ip_address(rule_ip)
+                packet_addr = ipaddress.ip_address(packet_ip)
+                return rule_addr == packet_addr
         except ValueError:
             return False
 

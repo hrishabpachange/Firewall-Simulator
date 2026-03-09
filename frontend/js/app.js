@@ -135,12 +135,22 @@ async function addRule(event) {
             closeRuleModal();
             fetchRules();
             // Reset form
-            document.getElementById('rule-source').value = 'ANY';
-            document.getElementById('rule-dest').value = 'ANY';
+            document.getElementById('rule-source').value = '';
+            document.getElementById('rule-dest').value = '';
             document.getElementById('rule-port').value = '0';
         } else {
             const errText = await response.text();
-            alert('Failed to add rule: ' + errText);
+            try {
+                const errJson = JSON.parse(errText);
+                if (errJson.detail && Array.isArray(errJson.detail)) {
+                    const messages = errJson.detail.map(e => `${e.loc[e.loc.length-1]}: ${e.msg}`).join('\n');
+                    alert('Validation Error:\n' + messages);
+                } else {
+                    alert('Failed to add rule: ' + (errJson.detail || errText));
+                }
+            } catch (e) {
+                alert('Failed to add rule: ' + errText);
+            }
         }
     } catch (error) {
         console.error("Error adding rule:", error);
@@ -160,15 +170,28 @@ window.deleteRule = async function (id) {
     }
 };
 
-async function simulatePacket() {
-    const protocol = document.querySelector('input[name="protocol"]:checked').value;
-    const sourceIp = document.getElementById('source-ip').value;
-    const destIp = document.getElementById('dest-ip').value;
-    const port = parseInt(document.getElementById('port').value);
+async function simulatePacket(event) {
+    if (event) event.preventDefault();
+
+    const protocolElement = document.querySelector('input[name="protocol"]:checked');
+    const protocol = protocolElement ? protocolElement.value : 'TCP';
+    
+    const sourceIp = document.getElementById('source-ip').value.trim();
+    const destIp = document.getElementById('dest-ip').value.trim();
+    const portStr = document.getElementById('port').value.trim();
 
     if (!sourceIp || !destIp) {
         alert("Please enter both Source and Destination IPs");
         return;
+    }
+
+    let port = 0;
+    if (portStr) {
+        port = parseInt(portStr);
+        if (isNaN(port) || port < 0 || port > 65535) {
+            alert("Port must be a valid number between 0 and 65535");
+            return;
+        }
     }
 
     const packet = {
@@ -187,6 +210,22 @@ async function simulatePacket() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(packet)
         });
+
+        if (!response.ok) {
+            const errText = await response.text();
+            try {
+                const errJson = JSON.parse(errText);
+                if (errJson.detail && Array.isArray(errJson.detail)) {
+                    const messages = errJson.detail.map(e => `${e.loc[e.loc.length-1]}: ${e.msg}`).join('\n');
+                    alert('Validation Error:\n' + messages);
+                } else {
+                    alert('Failed to simulate packet: ' + (errJson.detail || errText));
+                }
+            } catch (e) {
+                alert('Failed to simulate packet: ' + errText);
+            }
+            return;
+        }
 
         const result = await response.json();
 
@@ -241,12 +280,8 @@ function renderRules(rules) {
 function renderLogs(logs) {
     logsContainer.innerHTML = '';
 
-    // Sort logs descending (newest first)
-    // Assuming backend returns them in order, but let's reverse if needed
-    // Usually logs append, so latest is last. Let's show latest on top.
-    const reversedLogs = [...logs].reverse();
-
-    reversedLogs.forEach(log => {
+    // Backend returns newest first
+    logs.forEach(log => {
         const div = document.createElement('div');
         div.className = `log-entry ${log.action === 'ALLOWED' ? 'allowed' : 'blocked'}`;
 
