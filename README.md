@@ -55,13 +55,29 @@ Firewall Simulator/
 
 ## 🏁 Getting Started
 
-You need to run the **Backend** and **Frontend** simultaneously in separate terminals.
+The easiest way to run the simulator is to use the included boot script on Windows.
 
-### Prerequisites
+### ⚡ 1-Click Launch (Windows)
+
+Simply double-click the **`start_simulator.bat`** file in the root directory.
+This script automatically:
+1. Bootstraps the FastAPI backend server (and activates your `venv`).
+2. Starts the frontend Python HTTP server.
+3. Opens your default web browser directly to `http://localhost:3000`.
+
+To stop the simulator later, simply close the two command prompt windows that appeared.
+
+---
+
+### Manual Launch (Cross-Platform)
+
+If you aren't on Windows or prefer to run the components manually, you need to run the **Backend** and **Frontend** simultaneously in separate terminals.
+
+#### Prerequisites
 -   **Python 3.8+**
 -   **Modern Web Browser**
 
-### 1. Start the Backend Server
+#### 1. Start the Backend Server
 This powers the API and firewall logic.
 
 ```bash

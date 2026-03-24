@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from models import Rule, Packet, LogEntry
+from models import Rule, Packet, LogEntry, RuleActionUpdate
 from firewall import FirewallEngine
 from typing import List
 import uuid
@@ -10,7 +10,7 @@ app = FastAPI(title="Firewall Simulator API")
 # Enable CORS for frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # In production, replace with specific origin
+    allow_origins=["*"], # In production, replace with frontend URL
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -44,6 +44,13 @@ async def add_rule(rule: Rule):
 async def delete_rule(rule_id: str):
     firewall.delete_rule(rule_id)
     return {"status": "success", "message": f"Rule {rule_id} deleted"}
+
+@app.put("/rules/{rule_id}/action", response_model=Rule)
+async def update_rule_action(rule_id: str, update_data: RuleActionUpdate):
+    updated = firewall.update_rule_action(rule_id, update_data.action)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Rule not found")
+    return updated
 
 @app.post("/simulate", response_model=LogEntry)
 async def simulate_traffic(packet: Packet):

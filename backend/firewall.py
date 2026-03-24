@@ -15,6 +15,13 @@ class FirewallEngine:
     def delete_rule(self, rule_id: str):
         self.rules = [r for r in self.rules if r.id != rule_id]
 
+    def update_rule_action(self, rule_id: str, new_action: str):
+        for rule in self.rules:
+            if rule.id == rule_id:
+                rule.action = new_action
+                return rule
+        return None
+
     def _check_ip_match(self, rule_ip: str, packet_ip: str) -> bool:
         if rule_ip == "ANY" or rule_ip == "0.0.0.0/0":
             return True

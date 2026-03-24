@@ -46,3 +46,6 @@ class LogEntry(BaseModel):
     packet: Packet
     action: Literal["ALLOWED", "BLOCKED"]
     matched_rule_id: Optional[str] = None
+
+class RuleActionUpdate(BaseModel):
+    action: Literal["ALLOW", "BLOCK"]

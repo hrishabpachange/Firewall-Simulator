@@ -33,25 +33,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    if (saveRuleBtn) {
-        saveRuleBtn.addEventListener('click', (e) => addRule(e));
+    // Handle form submissions natively
+    const addRuleForm = document.getElementById('add-rule-form');
+    if (addRuleForm) {
+        addRuleForm.addEventListener('submit', (e) => addRule(e));
     }
 
-    if (simulateBtn) simulateBtn.addEventListener('click', simulatePacket);
-    if (refreshLogsBtn) refreshLogsBtn.addEventListener('click', fetchLogs);
-
-    // Enter key support for forms
-    document.addEventListener('keypress', function (e) {
-        if (e.key === 'Enter') {
-            // If in modal, save rule
-            if (!ruleModal.classList.contains('hidden')) {
-                // Prevent default if it's a form submit
-                // But addRule handles event.preventDefault()
-                // Just let the button click handler do it if button is inside form.
-                // Or explicitly call addRule(e)
-            }
-        }
-    });
+    const simulatorForm = document.getElementById('simulator-form');
+    if (simulatorForm) {
+        simulatorForm.addEventListener('submit', simulatePacket);
+    }
 });
 
 // --- Modal Functions ---
@@ -62,9 +53,9 @@ const openRuleModal = () => {
         clearTimeout(modalTimeout);
         ruleModal.classList.remove('hidden');
         // Small delay to allow display:block to apply before adding opacity class for transition
-        requestAnimationFrame(() => {
+        setTimeout(() => {
             ruleModal.classList.add('open');
-        });
+        }, 10);
     }
 };
 
@@ -160,14 +151,31 @@ async function addRule(event) {
 
 // Global for inline onclick
 window.deleteRule = async function (id) {
-    if (!confirm('Are you sure you want to delete this rule?')) return;
-
     try {
         await fetch(`${API_URL}/rules/${id}`, { method: 'DELETE' });
         fetchRules();
     } catch (error) {
         console.error("Error deleting rule:", error);
     }
+};
+
+window.toggleRuleAction = async function(id, isChecked) {
+    const action = isChecked ? 'ALLOW' : 'BLOCK';
+    try {
+        const response = await fetch(`${API_URL}/rules/${id}/action`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action })
+        });
+        if (!response.ok) {
+            alert("Failed to update rule action");
+        }
+    } catch (error) {
+        console.error("Error updating rule:", error);
+        alert("Error connecting to server.");
+    }
+    // Refresh to show updated action instantly
+    fetchRules();
 };
 
 async function simulatePacket(event) {
@@ -263,8 +271,17 @@ function renderRules(rules) {
 
     rules.forEach(rule => {
         const tr = document.createElement('tr');
+        const isAllow = rule.action === 'ALLOW';
         tr.innerHTML = `
-            <td><span class="badge badge-${rule.action}">${rule.action}</span></td>
+            <td>
+                <div style="display: flex; align-items: center; gap: 0.5rem">
+                    <label class="switch" title="Toggle Action">
+                        <input type="checkbox" onchange="toggleRuleAction('${rule.id}', this.checked)" ${isAllow ? 'checked' : ''}>
+                        <span class="slider"></span>
+                    </label>
+                    <span class="badge badge-${rule.action}">${rule.action}</span>
+                </div>
+            </td>
             <td>${rule.protocol}</td>
             <td style="font-family: var(--font-mono)">${rule.source_ip}</td>
             <td style="font-family: var(--font-mono)">${rule.destination_ip}</td>

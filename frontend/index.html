@@ -33,7 +33,7 @@
                     <h2>Traffic Simulator</h2>
                 </div>
                 <div class="panel-body">
-                    <form id="simulator-form" onsubmit="event.preventDefault();">
+                    <form id="simulator-form">
                         <div class="form-group">
                             <label>Protocol</label>
                             <div class="radio-group">
@@ -54,7 +54,7 @@
                             <label>Port</label>
                             <input type="number" id="port" value="80" placeholder="80">
                         </div>
-                        <button type="button" id="simulate-btn" class="btn btn-primary" style="width: 100%">Send Packet</button>
+                        <button type="submit" id="simulate-btn" class="btn btn-primary" style="width: 100%">Send Packet</button>
                     </form>
 
                     <div id="simulation-result" class="result-box hidden">
@@ -141,7 +141,7 @@
                 </div>
                 <div class="modal-actions">
                     <button type="button" id="cancel-rule-btn" class="btn btn-secondary">Cancel</button>
-                    <button type="button" id="save-rule-btn" class="btn btn-primary">Add Rule</button>
+                    <button type="submit" id="save-rule-btn" class="btn btn-primary">Add Rule</button>
                 </div>
             </form>
         </div>

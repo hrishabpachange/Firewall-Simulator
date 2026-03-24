@@ -50,6 +50,13 @@ def test_api():
     assert len(logs) >= 2, "Logs should have at least 2 entries"
     print(f"[PASS] Logs match: Found {len(logs)} entries")
 
+    # 5. Test Rule Toggle Action
+    toggle_req = requests.put(f"{BASE_URL}/rules/{rule['id']}/action", json={"action": "ALLOW"})
+    assert toggle_req.status_code == 200, f"Failed to toggle rule: {toggle_req.text}"
+    updated_rule = toggle_req.json()
+    assert updated_rule['action'] == "ALLOW", "Rule action was not updated to ALLOW"
+    print(f"[PASS] Successfully toggled action to ALLOW for rule: {rule['id']}")
+
     print("\nAll Backend Tests Passed!")
 
 if __name__ == "__main__":
